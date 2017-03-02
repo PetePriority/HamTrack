@@ -8,3 +8,6 @@
 
 # Getting started
 Adjust the configuration, in particular your wheel's circumference, mysql connection parameters, etc., and comment out features you don't need, like the Firebase Cloud messaging.
+
+# PHP-script
+The PHP-script, found in `php/`, requires the composer modules `twig` and `php-units-of-measure`. It displays daily, monthly, and session statistics. [This](https://sonic.serveftp.com/herbert/) shows it in action.

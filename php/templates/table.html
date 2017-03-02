@@ -1,0 +1,24 @@
+<table id='hamster'>
+    <col width='26%'>
+    <col width='18%'>
+    <col width='23%'>
+    <col width='23%'>
+    <col width='10%'>
+  <thead>
+    <tr>
+      <th>Session start</th>
+      <th>Duration</th>
+      <th>Distance (metric)</th>
+      <th>Distance (imperial)</th>
+      <th>RPM</th>
+  </tr></thead>
+  {% for row in table.rows %}
+  <tr>
+    <td>{{ row.start }}</td>
+    <td>{{ row.duration  }}</td>
+    <td>{{ row.distance }}</td>
+    <td>{{ row.distance_imp }}</td>
+    <td>{{ row.rpm }}</td>
+  </tr>
+  {% endfor %}
+</table>

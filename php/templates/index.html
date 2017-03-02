@@ -1,0 +1,33 @@
+<!DOCTYPE HTML>
+<html lan="en">
+  <head>
+    <title>Herbert's Running Activity</title>
+    <meta name="description"  content="Herbert Hamilton's running statistics. Recorded with a Raspberry Pi." />
+    <meta charset="utf-8" />
+    <link rel="stylesheet" href="style.css" type="text/css" />
+  </head>
+  <body>
+    <div class='card'>
+      <div class='container'>
+	<h1><b>Herbert's Running Activity</b></h1>
+	<p>
+	  Herbert's running activity is tracked using an old bike tachometer and a Raspberry Pi.
+	</p>
+      </div>
+    </div>
+
+    {% for table in tables %}
+    <div class='card'>
+      <div class='container'>
+	<h3><b>{{ table.title }}</b></h3>
+	{% if table.text %}
+	<p>
+	  {{ table.text }}
+	</p>
+	{% endif %}
+	{{ include('table.html') }}
+      </div>
+    </div>
+    {% endfor %}
+  </body>
+</html>
