@@ -2,6 +2,7 @@ import os
 import time
 from datetime import datetime
 import logging
+import logging.config
 
 import RPi.GPIO as GPIO
 
@@ -35,6 +36,9 @@ SQL_USER = '<SQL_USER>'
 SQL_PASSWORD = '<SQL_PASSWORD>'
 mysql_db = MySQLDatabase(SQL_DB, host=SQL_HOST, user=SQL_USER, passwd=SQL_PASSWORD)
 
+# FCM stuff
+# communicates with Android app that shows notifications
+FCM_API_KEY = '<FCM_API_KEY>'
 
 # Fallback file - written when sql fails
 FALLBACK_FILE = os.path.join(
@@ -68,7 +72,7 @@ class HamTrack(object):
             logger.info('Table Hamstersession created')
 
         # FCM stuff
-        self.push_service = FCMNotification(api_key="<FCM API KEY>")
+        self.push_service = FCMNotification(api_key=FCM_API_KEY)
 
         # no. of revolutions
         self.revolutions = 0
