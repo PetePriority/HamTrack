@@ -7,7 +7,9 @@ import logging.config
 import RPi.GPIO as GPIO
 
 from peewee import *
-from playhouse.shortcuts import RetryOperationalError
+from playhouse.pool import PooledMySQLDatabase
+
+import threading
 
 from pyfcm import FCMNotification
 
@@ -60,6 +62,33 @@ class Hamstersession(BaseModel):
     duration = FloatField()
     distance = FloatField()
 
+def fallback_save(sessiondata):
+    with open(FALLBACK_FILE, 'a') as fd:
+        fd.write('---\n')  # to make it easily readable via pyaml
+        fd.write('start: {0}\n'.format(sessiondata.start))
+        fd.write('circumference: {0}\n'.format(sessiondata.circumference))
+        fd.write('duration: {0}\n'.format(sessiondata.duration))
+        fd.write('distance: {0}\n'.format(sessiondata.distance))
+
+def execute_sql_query(sessiondata, retries=5, wait=30):
+    while True:
+        try:
+            retries -= 1
+            mysql_db.connect()
+            sessiondata.save()
+            mysql_db.close()
+            logger.info("MySQL query successful")
+            return True
+        except OperationalError as err:
+            mysql_db.close()
+            logger.error("MySQL failed: %s", err)
+            logger.error("Retries left: %d", retries)
+            if retries == 0:
+                logger.error("Writing fallback")
+                fallback_save(sessiondata)
+            time.sleep(wait)
+
+
 
 class HamTrack(object):
     def __init__(self):
@@ -110,25 +139,16 @@ class HamTrack(object):
         }
         self.post_notification(data_message=data_message)
 
-        try:
-            # mysql_db.connect()
-            mysql_db.get_conn().ping(True)
-            hamstersession = Hamstersession.create(
-                start=wstart,
-                circumference=wcircumference,
-                duration=wduration,
-                distance=wdistance
-            )
-            hamstersession.save()
-            mysql_db.close()
-        except Exception as e:
-            logger.error('MySQL error: {0}'.format(e))
-            with open(FALLBACK_FILE, 'a') as fd:
-                fd.write('---\n')  # to make it easily readable via pyaml
-                fd.write('start: {0}\n'.format(wstart))
-                fd.write('circumference: {0}\n'.format(wcircumference))
-                fd.write('duration: {0}\n'.format(wduration))
-                fd.write('distance: {0}\n'.format(wdistance))
+
+        hamstersession = Hamstersession(
+            start=wstart,
+            circumference=wcircumference,
+            duration=wduration,
+            distance=wdistance
+        )
+
+        t = threading.Thread(target=execute_sql_query, args=(hamstersession,))
+        t.start()
 
     def start_session(self, session_start):
         data_message = {
@@ -150,7 +170,7 @@ class HamTrack(object):
                 if self.revolutions < 5 and self.session_start != 0:
                     logger.info('Session aborted - no activity')
                 self.revolutions = 0
-                session_start = 0
+                self.session_start = 0
                 continue
 
             # Debounce
@@ -166,7 +186,7 @@ class HamTrack(object):
                 else:
                     self.revolutions += 1
                 if self.revolutions == 5:
-                    self.start_session(session_start)
+                    self.start_session(self.session_start)
 
 
 if __name__ == "__main__":
