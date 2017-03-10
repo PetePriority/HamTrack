@@ -37,7 +37,8 @@ SQL_HOST = '<SQL_HOST>'
 SQL_DB = '<SQL_DB>'
 SQL_USER = '<SQL_USER>'
 SQL_PASSWORD = '<SQL_PASSWORD>'
-mysql_db = MySQLDatabase(SQL_DB, host=SQL_HOST, user=SQL_USER, passwd=SQL_PASSWORD)
+mysql_db = PooledMySQLDatabase(SQL_DB, host=SQL_HOST, user=SQL_USER, passwd=SQL_PASSWORD,
+                               max_connections=8, stale_timeout=300)
 
 # FCM stuff
 # communicates with Android app that shows notifications
@@ -71,7 +72,7 @@ def fallback_save(sessiondata):
         fd.write('duration: {0}\n'.format(sessiondata.duration))
         fd.write('distance: {0}\n'.format(sessiondata.distance))
 
-def execute_sql_query(sessiondata, retries=5, wait=30):
+def execute_sql_query(sessiondata, retries=20, wait=30):
     while True:
         try:
             retries -= 1
@@ -87,6 +88,7 @@ def execute_sql_query(sessiondata, retries=5, wait=30):
             if retries == 0:
                 logger.error("Writing fallback")
                 fallback_save(sessiondata)
+                return False
             time.sleep(wait)
 
 
