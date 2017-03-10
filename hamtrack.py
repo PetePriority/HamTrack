@@ -12,6 +12,7 @@ from playhouse.pool import PooledMySQLDatabase
 import threading
 
 from pyfcm import FCMNotification
+from requests import ConnectionError
 
 # wheel circumference in cm
 # e.g., for 2*r = 28cm, d = 2*pi*r
@@ -112,10 +113,16 @@ class HamTrack(object):
         logger.info('HamTrack initialized')
 
     def post_notification(self, data_message):
-        result = self.push_service.notify_topic_subscribers(
-            topic_name="news",
-            data_message=data_message
-        )
+        result = None
+
+        try:
+            result = self.push_service.notify_topic_subscribers(
+                topic_name="news",
+                data_message=data_message
+            )
+        except requests.ConnectionError as err:
+            logger.error("Could not send notification: %s", err)
+
         return result
 
     def finish_session(self, session_end):
@@ -137,8 +144,8 @@ class HamTrack(object):
             "distance": "{0:.1f}".format(wdistance/100.0),
             "revolutions": self.revolutions
         }
-        self.post_notification(data_message=data_message)
 
+        self.post_notification(data_message=data_message)
 
         hamstersession = Hamstersession(
             start=wstart,
