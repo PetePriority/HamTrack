@@ -122,7 +122,7 @@ class HamTrack(object):
                 topic_name="news",
                 data_message=data_message
             )
-        except requests.ConnectionError as err:
+        except ConnectionError as err:
             logger.error("Could not send notification: %s", err)
 
         return result
